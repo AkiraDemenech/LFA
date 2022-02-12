@@ -17,7 +17,7 @@ def derivar (n, a, b, i = 0):
 	
 def tipo (g):	
 	t = 3
-	d = e = False 
+	d = e = f = False 
 	
 	for n in g:
 	
@@ -25,11 +25,11 @@ def tipo (g):
 		
 			if len(n) > 1: # sensível ao contexto 
 				
-				t //= t + (not t) # vira 1 se for não nulo e continua 0 se assim já for 
+				t = 1  
 				
 				if len(n) > len(m): # irrestrita quando alguma regra reduzir a forma sequencial 
 				
-					t = 0
+					return 0
 					
 			elif t == 3: # se ainda for possível que seja linear/regular		
 			
@@ -43,54 +43,59 @@ def tipo (g):
 						
 						d = d or m[-1].isupper()
 						
-						if d and e: # não é linear/regular se não for exclusivamente à direita ou esquerda
+						if len(m) > 2:
 							
-							t = 2
+							for c in m:
+							
+								f = f or c.isupper() # se houver algum não-terminal 
+											
+	if ((d and e) or (d == e and f)) and t == 3: # não é linear/regular se não for exclusivamente à direita ou esquerda, ou se houver algum não-terminal no meio
+							
+		return 2					
 						
-					elif e:	# se uma não-terminal levar a outro não-terminal 
-					
-						t = 2
-				
-				
-				
-			
-			
+																							
 	return t		
 	
 	
-	
+def gerar (inicial, gerador, gramatica):	
 
-g = {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': ['bE'], 'EF': ['bc'], 'A': ['a'], 'B': ['b'], 'C': ['c']}
+	print('Gramática tipo', tipo(gramatica))
 
-s = 'aIF'
-while 'I' in s:
-	s = derivar(s, 'I', g['I'][int(input(s))])
+	s = derivar(inicial, inicial, gramatica[inicial])
 	
-while not s.islower():				
-	for f in g:
+	while True:
+	
+		s = derivar(s, gerador, gramatica)
 		
-	#	print(f, g[f])
-		for h in range(len(s)):		
-			s = derivar(s, f, g, h)
+		if not gerador in s:
+			break
+			
+	r = True
+	while len(s) and r:		
+		r = False
+		for f in gramatica:
+			for h in range(len(s)):
+				t = derivar(s, f, gramatica, h)
+				if t != s:
+					s = t
+					r = True
+		print(s)		
 	
-	print(s)	
+	return s	
+
+gerar('A', 'B', {'A': ['0B1'], 'B': ['', 'A']})
+
+gerar('B', 'A', {'A': ['', 'Aa'], 'B': ['Ab']})
+
+gerar('C', 'C', {'C': ['c', 'aCb']})
+
+gerar('T', 'I', {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': ['bE'], 'EF': ['bc'], 'A': ['a'], 'B': ['b'], 'C': ['c']})
+
+print(repr(gerar('I', 'C', {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']})))
 	
+gerar('C', 'C', {'C': ['', '0C0', '1C1']})	
+gerar('C', 'C', {'C': ['', '0A', '1B'], 'A': ['C0'], 'B': ['C1']})
 
-g = {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']}
-
-
-
-s = 'EC'
-while 'C' in s:
-	s = derivar(s, 'C', g['C'][int(input(s))])
-
-while not s.islower():	
 	
-	
-	
-	for f in g:
-		for h in range(len(s)):		
-			s = derivar(s, f, g, h)	
-	print(s)	
 	
 	
