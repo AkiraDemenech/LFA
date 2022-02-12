@@ -15,8 +15,52 @@ def derivar (n, a, b, i = 0):
 	
 	return n[:i] + b + n[i + len(a):] 	
 	
+def tipo (g):	
+	t = 3
+	d = e = False 
+	
+	for n in g:
+	
+		for m in g[n]:
+		
+			if len(n) > 1: # sensível ao contexto 
+				
+				t //= t + (not t) # vira 1 se for não nulo e continua 0 se assim já for 
+				
+				if len(n) > len(m): # irrestrita quando alguma regra reduzir a forma sequencial 
+				
+					t = 0
+					
+			elif t == 3: # se ainda for possível que seja linear/regular		
+			
+				if len(m) > 0:
+			
+					e = e or m[0].isupper()
+					
+					 
+			
+					if len(m) > 1:
+						
+						d = d or m[-1].isupper()
+						
+						if d and e: # não é linear/regular se não for exclusivamente à direita ou esquerda
+							
+							t = 2
+						
+					elif e:	# se uma não-terminal levar a outro não-terminal 
+					
+						t = 2
+				
+				
+				
+			
+			
+	return t		
+	
+	
+	
 
-g = {'I': ['E', 'AIBC'], 'CF': ['Fc'], 'CB': ['BC'], 'EB': ['bE'], 'EF': ['bc'], 'A': ['a']}
+g = {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': ['bE'], 'EF': ['bc'], 'A': ['a'], 'B': ['b'], 'C': ['c']}
 
 s = 'aIF'
 while 'I' in s:
@@ -32,7 +76,9 @@ while not s.islower():
 	print(s)	
 	
 
-g = {'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']}
+g = {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']}
+
+
 
 s = 'EC'
 while 'C' in s:
@@ -46,4 +92,5 @@ while not s.islower():
 		for h in range(len(s)):		
 			s = derivar(s, f, g, h)	
 	print(s)	
+	
 	

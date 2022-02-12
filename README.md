@@ -1,2 +1,3 @@
-# LFA
-linguagens formais e autômatos
+# Linguagens Formais e Autômatos 
+
+Algumas coisas para ajudar a resolver as Atividades    
