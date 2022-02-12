@@ -57,18 +57,11 @@ def tipo (g):
 	return t		
 	
 	
-def gerar (inicial, gerador, gramatica):	
+def gerar (inicial, gramatica):	
 
 	print('Gramática tipo', tipo(gramatica))
 
-	s = derivar(inicial, inicial, gramatica[inicial])
-	
-	while True:
-	
-		s = derivar(s, gerador, gramatica)
-		
-		if not gerador in s:
-			break
+	s = inicial
 			
 	r = True
 	while len(s) and r:		
@@ -83,18 +76,18 @@ def gerar (inicial, gerador, gramatica):
 	
 	return s	
 
-gerar('A', 'B', {'A': ['0B1'], 'B': ['', 'A']})
+gerar('A', {'A': ['0B1'], 'B': ['', 'A']})
 
-gerar('B', 'A', {'A': ['', 'Aa'], 'B': ['Ab']})
+gerar('B', {'A': ['', 'Aa'], 'B': ['Ab']})
 
-gerar('C', 'C', {'C': ['c', 'aCb']})
+gerar('C', {'C': ['c', 'aCb']})
 
-gerar('T', 'I', {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': ['bE'], 'EF': ['bc'], 'A': ['a'], 'B': ['b'], 'C': ['c']})
+gerar('T', {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': ['bE'], 'EF': ['bc'], 'A': ['a'], 'B': ['b'], 'C': ['c']})
 
-print(repr(gerar('I', 'C', {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']})))
+gerar('I', {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']})
 	
-gerar('C', 'C', {'C': ['', '0C0', '1C1']})	
-gerar('C', 'C', {'C': ['', '0A', '1B'], 'A': ['C0'], 'B': ['C1']})
+gerar('C', {'C': ['', '0C0', '1C1']})	
+gerar('C', {'C': ['', '0A', '1B'], 'A': ['C0'], 'B': ['C1']})
 
 	
 	
