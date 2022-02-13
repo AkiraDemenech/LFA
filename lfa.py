@@ -31,25 +31,20 @@ def tipo (g):
 				
 					return 0
 					
-			elif t == 3: # se ainda for possível que seja linear/regular		
+			elif t == 3 and len(m) > 1: # se ainda for possível que seja linear/regular		
 			
-				if len(m) > 0:
-			
-					e = e or m[0].isupper()
-					
-					 
-			
-					if len(m) > 1:
+				e = e or m[0].isupper()
 						
-						d = d or m[-1].isupper()
-						
-						if len(m) > 2:
+				d = d or m[-1].isupper()
+
+				c = len(m) - 1		
+				while c > 1:
 							
-							for c in m:
+					c -= 1
 							
-								f = f or c.isupper() # se houver algum não-terminal 
+					f = f or m[c].isupper() # se houver algum não-terminal 
 											
-	if ((d and e) or (d == e and f)) and t == 3: # não é linear/regular se não for exclusivamente à direita ou esquerda, ou se houver algum não-terminal no meio
+	if (f or (d and e)) and t == 3: # não é linear/regular se não for exclusivamente à direita ou esquerda, ou se houver algum não-terminal no meio
 							
 		return 2					
 						
