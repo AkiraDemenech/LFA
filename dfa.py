@@ -1,3 +1,9 @@
+
+
+
+
+
+
 e = l = '' # epsilon = lambda = empty string 
 accepted = {set, dict} 
 
@@ -79,6 +85,113 @@ def consumes (state, automaton, string):
 def accepts (initial_state, automaton_transitions, final_states, input_string):			 
 	return is_final(consumes(initial_state, automaton_transitions, input_string), final_states)
 
+def determine_tokens (finals, priority):
+	for qf in finals:
+		if type(finals[qf]) != list:
+			continue
+		dt = len(priority)
+		for t in finals[qf]:
+			dt = min(dt, (priority.index(t) if t in priority else dt))
+		if dt < len(priority):	
+			finals[qf] = priority[dt]
+				
+def callback_dependencies (x, y, dependencies):		
+	if type(dependencies[x][y]) == set:
+		for a,b in dependencies[x][y]:
+			callback_dependencies(a,b,dependencies)
+		dependencies[x][y] = dependencies[y][x] = False	
+	
+
+
+def minimize (initial_state, automaton_transitions, final_states = {}, token_priority = []):
+
+	equivalence = {}
+	all_states = []
+	states = list(automaton_transitions)
+	i = -1
+	q = initial_state 
+	while i < len(states):
+		if not q in equivalence: 
+			equivalence[q] = {}
+			all_states.append(q)
+
+			if q in automaton_transitions:
+				for t in automaton_transitions[q]:
+					if automaton_transitions[q][t] in final_states and not automaton_transitions[q][t] in automaton_transitions: #and not automaton_transitions[q][t] in states:
+						states.append(automaton_transitions[q][t])
+
+		
+		q = states[i]		
+		i += 1
+
+	for q in equivalence:
+		for t in equivalence:	
+			if not q in equivalence[t]:									  
+				r = True
+				if q != t:
+					if ((q in final_states) != (t in final_states)) or (q in final_states and final_states[q] != final_states[t]):
+						r = False
+					else: 	
+						r = set()
+
+				equivalence[q][t] = equivalence[t][q] = r
+
+	for q in all_states:		
+		for t in equivalence[q]:
+			if type(equivalence[q][t]) == set:
+				equals = True
+
+				for s in set(automaton_transitions[q]).union(automaton_transitions[t]):
+
+					qa = tb = None
+
+					if s in automaton_transitions[q] and automaton_transitions[q][s] in equivalence: 
+						qa = automaton_transitions[q][s]
+
+					if s in automaton_transitions[t] and automaton_transitions[t][s] in equivalence: 
+						tb = automaton_transitions[t][s]	
+
+					if qa == tb:	
+						continue
+
+					if qa == None or tb == None or equivalence[qa][tb] == False:
+						callback_dependencies(q, t, equivalence) # False and callback all 												
+						break
+
+					if type(equivalence[qa][tb]) == set: 		
+						equivalence[qa][tb].add((q,t)) # please call me if this fails later 
+						equals = False
+				else: 		
+					if equals:
+						equivalence[q][t] = equivalence[t][q] = True
+
+
+
+
+	replacing = {}
+	for q in all_states:
+		r = replacing[q] if q in replacing else q
+		for t in equivalence[q]:
+			if r != t and equivalence[q][t] != False and not t in replacing:
+				replacing[t] = r
+
+	for q in replacing:
+		automaton_transitions.pop(q)
+		if q in final_states:
+			final_states.pop(q)
+	
+	for q in automaton_transitions:
+		for s in set(automaton_transitions[q]):
+			if automaton_transitions[q][s] in replacing:
+				automaton_transitions[q][s] = replacing[automaton_transitions[q][s]]
+			elif not automaton_transitions[q][s] in equivalence:   	
+				automaton_transitions[q].pop(s)
+
+
+					
+
+	return initial_state, automaton_transitions, final_states				
+
 def dfa (initial_state, automaton_transitions, final_states = {}):
 
 	states = [complete_state(initial_state, automaton_transitions)]
@@ -142,6 +255,9 @@ def dfa (initial_state, automaton_transitions, final_states = {}):
 
 
 	
+
+
+
 
 
 

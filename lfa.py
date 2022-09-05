@@ -82,6 +82,7 @@ gerar('T', {'T': ['aIF'], 'I': ['E', 'aIbc'], 'cF': ['Fc'], 'cb': ['bc'], 'Eb': 
 
 gerar('I', {'I': ['EC'], 'C': ['D', 'aAC', 'bBC'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'Ea': ['aE'], 'Eb': ['bE'], 'ED': [''], 'AD': ['Da'], 'BD': ['Db']})
 
+gerar('I', {'I': ['CF'], 'C': ['F', 'aEA', 'bEB'], 'AF': ['GaF'], 'BF': ['GbF'], 'FF': [''], 'Fa': ['aF'], 'Fb': ['bF'], 'aG': ['Ga'], 'bG': ['Gb'], 'Aa': ['aA'], 'Ab': ['bA'], 'Bb': ['bB'], 'Ba': ['aB'], 'aG': ['Ga'], 'bG': ['Gb'], 'EG':['C']})
 
 
 	
