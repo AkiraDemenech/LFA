@@ -81,21 +81,24 @@ def consumes (state, automaton, string):
 	return state		
 
 	
-			
 def accepts (initial_state, automaton_transitions, final_states, input_string):			 
 	return is_final(consumes(initial_state, automaton_transitions, input_string), final_states)
 
 def determine_tokens (finals, priority):
 	for qf in finals:
 		if type(finals[qf]) != list:
+			print('final state', qf,'token',finals[qf],'already determined.')
 			continue
 		dt = len(priority)
 		for t in finals[qf]:
 			dt = min(dt, (priority.index(t) if t in priority else dt))
 		if dt < len(priority):	
 			finals[qf] = priority[dt]
+		else:	
+			print('tokens:\tcoudn\'t find priority token for final state', qf, 'in list',finals[qf])
 				
 def callback_dependencies (x, y, dependencies):		
+	print(x,y,'\t',dependencies[x][y])	
 	if type(dependencies[x][y]) == set:
 		for a,b in dependencies[x][y]:
 			callback_dependencies(a,b,dependencies)
@@ -104,21 +107,24 @@ def callback_dependencies (x, y, dependencies):
 
 
 def minimize (initial_state, automaton_transitions, final_states = {}, token_priority = []):
+	initial_state, automaton_transitions, final_states = dfa(initial_state, automaton_transitions, final_states)
+	determine_tokens(final_states, token_priority)
+	print(initial_state, automaton_transitions, final_states)
 
 	equivalence = {}
 	all_states = []
-	states = list(automaton_transitions)
+	states = list(final_states) + list(automaton_transitions)
+	#print('states:\t',states)
+	#states.insert(0, initial_state)
 	i = -1
 	q = initial_state 
 	while i < len(states):
 		if not q in equivalence: 
 			equivalence[q] = {}
 			all_states.append(q)
+		#	print(q)
 
-			if q in automaton_transitions:
-				for t in automaton_transitions[q]:
-					if automaton_transitions[q][t] in final_states and not automaton_transitions[q][t] in automaton_transitions: #and not automaton_transitions[q][t] in states:
-						states.append(automaton_transitions[q][t])
+			
 
 		
 		q = states[i]		
@@ -135,6 +141,9 @@ def minimize (initial_state, automaton_transitions, final_states = {}, token_pri
 						r = set()
 
 				equivalence[q][t] = equivalence[t][q] = r
+				print(q,t,end='\t')
+		print()						 
+	print(equivalence)
 
 	for q in all_states:		
 		for t in equivalence[q]:
@@ -174,6 +183,9 @@ def minimize (initial_state, automaton_transitions, final_states = {}, token_pri
 		for t in equivalence[q]:
 			if r != t and equivalence[q][t] != False and not t in replacing:
 				replacing[t] = r
+				print(t,'is',r)
+	print(equivalence)			
+	print(replacing)
 
 	for q in replacing:
 		automaton_transitions.pop(q)
@@ -225,14 +237,18 @@ def dfa (initial_state, automaton_transitions, final_states = {}):
 				
 				print(state_transitions[s], 'created')
 
-				tokens = set()
+				tokens = []
 				for q in t:
 					if q in final_states:
 						try:
-							tokens.add(final_states[q])
+							tokens.append(final_states[q])
 						except TypeError:	
-							tokens = True
-				if tokens:		
+							print('final state',q,'token unidentified')
+							tokens.append(True)
+							break
+				if len(tokens):		
+					if len(tokens) == 1:
+						tokens = tokens[0]
 					deterministic_final_states[t] = tokens
 			state_transitions[s] = t	
 
@@ -249,17 +265,44 @@ def dfa (initial_state, automaton_transitions, final_states = {}):
 
 
 
+'''
+print(consumes(1,{1:{0:2,1:6},2:{0:7,1:3},3:{0:8,1:4},4:{1:10},6:{0:7,1:7},7:{0:8,1:8},8:{0:10,1:10},10:{}},[0,1,1]))
+print(accepts(0, {0:{'a':1},1:{'a':2},2:{'a':3},3:{'a':4},4:{'a':0}}, 1, 'aaaaaaaaaaa'))
+
+print(consumes(0,{0:{'a':{0,1},'b':0},1:{'b':2},2:{'b':3},3:{}},'ababb'))
 
 
+print(consumes(0, {0: {'a': {1,3}, 'b': {}}, 1: {'a': {}, 'b': {0,2}}, 2: {'a': {1}, 'b': {3}}, 3: {'a': {0,2}, 'b': {}}}, 'abbaa'))
 
 
-
+print(consumes(0,{0: {'a': {1,3}}, 1: {'a': {2}}, 2: {'a': {1}}, 3: {'a': {4}}, 4: {'a': {5}}, 5: {'a': {3}}}, 'aaaaaa'))
 	
 
+print(consumes(0, {0: {0: {0}, 1: {0,1}}, 1: {0: {2}, 1: {2}}, 2: {0: {3}, 1: {3}}}, [0,0,0,1,0,0,0]))	
+'''
 
+#print(consumes(1, {1: {'': {2}, 'x': {5}}, 2: {'': {3}, 'y': {6}}, 3: {'': 4}, 4: {'': 1}, 5: {'z': {2}, '': {6}}, 6: {'': 7}}, 'xzy'))
+#print(dfa(1, {1: {'': {2}, 'x': {5}}, 2: {'': {3}, 'y': {6}}, 3: {'': 4}, 4: {'': 1}, 5: {'z': {2}, '': {6}}, 6: {'': 7}}, {7}))
 
+#print(minimize(1, {1: {'a': 2, 'b': 4}, 2: {'a': 3}, 3: {'a': 2}, 4: {'a': 5}, 5: {'a': 4}}, {2, 4}))
 
-
+print(minimize(1, {
+	1: {'': {2,8}}, 
+	2: {'': {3,4}}, 
+	3: {'1': {5}}, 
+	4: {'0': {6}}, 
+	5: {'': {7}}, 
+	6: {'': {7}}, 
+	7: {'': {2, 8}}, 
+	8: {'.': {9}}, 
+	9: {'': {10, 16}}, 
+	10: {'': {11, 12}}, 
+	11: {'1': {13}}, 
+	12: {'0': {14}}, 
+	13: {'': {15}}, 
+	14: {'': {15}}, 
+	15: {'': {10, 16}} 
+}, {16}))
 
 
 
