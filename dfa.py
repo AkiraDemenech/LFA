@@ -84,6 +84,98 @@ def consumes (state, automaton, string):
 def accepts (initial_state, automaton_transitions, final_states, input_string):			 
 	return is_final(consumes(initial_state, automaton_transitions, input_string), final_states)
 
+
+
+def rename (initial_state, automaton_transitions, final_states = {}, initial_value = 1):
+
+	  
+	k = initial_value
+	i = -1
+
+	states = list(expand_state(automaton_transitions, expand_state(final_states, set())))
+	names = {}
+	dep = {}
+	q = initial_state
+	
+	while i < len(states):
+
+		if not q in names:
+			   
+			names[q] = k
+			k += 1
+
+						
+
+			if q in automaton_transitions:
+				d = q in final_states 
+				for s in set(automaton_transitions[q]):
+					p = {}					 
+					for t in expand_state(automaton_transitions[q][s]):
+						
+						if not t in final_states:	
+							if (not t in automaton_transitions) or not len(automaton_transitions[t]): 								
+								continue
+							
+							if not t in dep:
+								dep[t] = set()
+							dep[t].add((q,s))
+						p[t] = len(p)	
+						d = d or (t != q)
+					if len(p):	
+						automaton_transitions[q][s] = p
+					else:	
+						automaton_transitions[q].pop(s)
+				if not (d and len(automaton_transitions[q])): 		
+					automaton_transitions.pop(q)
+					callback_uselessness(q, dep, automaton_transitions, final_states)
+
+
+					
+
+
+		
+		q = states[i]	
+		i += 1
+
+	print(automaton_transitions)
+	transitions = {}
+
+	for q in automaton_transitions:		
+		for s in set(automaton_transitions[q]):			
+			v = set()
+			for t in automaton_transitions[q][s]:
+			#	print(q, s, t)
+				v.add(names[t])
+			if len(v) == 1:	
+				automaton_transitions[q][s] = v.pop()
+			else:	
+				automaton_transitions[q][s] = v
+		
+		transitions[names[q]] = automaton_transitions[q]
+
+	final_names = {}
+
+	for f in final_states:
+		try:
+			final_names[names[f]] = final_states[f]
+		except TypeError:	
+			final_names[names[f]] = True
+
+	return names[initial_state], transitions, final_names	
+		
+
+
+
+
+
+	
+
+
+
+
+
+	
+
 def determine_tokens (finals, priority):
 	for qf in finals:
 		if type(finals[qf]) != list:
@@ -104,6 +196,36 @@ def callback_dependencies (x, y, dependencies):
 			callback_dependencies(a,b,dependencies)
 		dependencies[x][y] = dependencies[y][x] = False	
 	
+def callback_uselessness (q, dependencies, transitions, finals = {}):
+	print(q,'isn\'t useful anymore.')	
+	if not q in dependencies:
+		return
+	print(dependencies[q])	
+
+	for t,s in dependencies.pop(q):
+		if not t in transitions:
+			continue
+		transitions[t][s].pop(q)
+		if not len(transitions[t][s]):
+			transitions[t].pop(s)
+			if not len(transitions[t]):
+				transitions.pop(t)
+				callback_uselessness(t,dependencies,transitions,finals)
+				continue
+			
+		if not t in finals:	
+			for s in transitions[t]:
+				if len(transitions[t][s]) > 1:
+					break # go to more states 
+				for r in transitions[t][s]:
+					if t != r: 
+						break
+			else: # if it only goes to itself (didn't find any other states)		
+				transitions.pop(t)
+				callback_uselessness(t,dependencies,transitions,finals)
+					
+
+				
 
 
 def minimize (initial_state, automaton_transitions, final_states = {}, token_priority = []):
@@ -261,7 +383,40 @@ def dfa (initial_state, automaton_transitions, final_states = {}):
 
 	return states_tuples[0], deterministic_finite_automaton, deterministic_final_states		
 	
+def fsm (initial_state, automaton_transitions, final_states = {}):
+	
+	states = set(automaton_transitions)
+	states.update(final_states)
+	symbols = set()
+	transitions = set()
 
+	for q in automaton_transitions:
+		symbols.update(automaton_transitions[q])
+		for s in automaton_transitions[q]:
+			for t in expand_state(automaton_transitions[q][s]):
+				states.add(t)
+				transitions.add((q,s,t))
+
+	print('#states')			
+	for q in states:
+		print(q)
+
+	print('#initial')	
+	print(initial_state)
+
+	print('#accepting')
+	for qf in final_states:
+		print(qf)
+
+	print('#alphabet')	
+	for s in symbols:
+		print(s)
+
+	print('#transitions')	
+	for q,s,t in transitions:
+		print(f'{q}:{s}>{t}')
+
+			
 
 
 
@@ -286,6 +441,7 @@ print(consumes(0, {0: {0: {0}, 1: {0,1}}, 1: {0: {2}, 1: {2}}, 2: {0: {3}, 1: {3
 
 #print(minimize(1, {1: {'a': 2, 'b': 4}, 2: {'a': 3}, 3: {'a': 2}, 4: {'a': 5}, 5: {'a': 4}}, {2, 4}))
 
+'''
 print(minimize(1, {
 	1: {'': {2,8}}, 
 	2: {'': {3,4}}, 
@@ -303,6 +459,60 @@ print(minimize(1, {
 	14: {'': {15}}, 
 	15: {'': {10, 16}} 
 }, {16}))
+
+
+print(minimize(1, {
+	1: {'0': 2, '1': 6}, 
+	2: {'0': 7, '1': 3}, 
+	3: {'0': 1, '1': 3}, 
+	4: {'0': 3, '1': 7}, 
+	5: {'0': 8, '1': 6}, 
+	6: {'0': 3, '1': 7}, 
+	7: {'0': 7, '1': 5}, 
+	8: {'0': 7, '1': 3} 
+}, {3}))
+'''
+
+'''
+print(minimize(0, {
+	0: {'': {1.1, 2.1, 3.1}},
+	
+	1.1: {'i': 1.2},
+	1.2: {'f': 1.3},
+
+	2.1: dict([(str(n), 2.2) for n in range(10)] + [('.', 2.4)]),
+	2.2: dict([(str(n), 2.2) for n in range(10)] + [('.', 2.3)]),
+	2.3: dict([(str(n), 2.3) for n in range(10)]), 
+	2.4: dict([(str(n), 2.5) for n in range(10)]), 
+	2.5: dict([(str(n), 2.5) for n in range(10)]), 
+
+	3.1: dict([(str(n), 3.2) for n in range(10)]), 
+	3.2: dict([(str(n), 3.2) for n in range(10)])  
+
+
+
+
+}, {
+	1.3: 'IF',
+	3.2: 'INT',
+	2.3: 'FLOAT',
+	2.5: 'FLOAT'
+
+}, ['IF', 'INT', 'FLOAT']))
+'''
+
+print(fsm(*rename(*minimize(*dfa(0, {
+	0: {'a': {1, 2}, 'b': {3, 4}}, 
+	1: {'a': {1, 2}, 'b': {3, 4}}, 
+	2: {'a': {1, 2, 0}, 'b': {3, 4}, 'c': {0}}, 
+	3: {'a': {1}, 'b': {2}, 'c': {4}}, 
+	4: {'a': {2}, 'b': {3}, 'c': {5}},
+	5: {'a': 6},
+	6: {'b': 7},
+	7: {'c': 7}
+}, {})))))
+
+
 
 
 
