@@ -390,6 +390,8 @@ def fsm (initial_state, automaton_transitions, final_states = {}):
 	symbols = set()
 	transitions = set()
 
+	
+
 	for q in automaton_transitions:
 		symbols.update(automaton_transitions[q])
 		for s in automaton_transitions[q]:
@@ -417,6 +419,34 @@ def fsm (initial_state, automaton_transitions, final_states = {}):
 		print(f'{q}:{s}>{t}')
 
 			
+def matrix (initial_state, automaton_transitions, final_states, token_priority = []):			
+
+	initial_state, automaton_transitions, final_states = rename(*minimize(initial_state, automaton_transitions, final_states, token_priority))
+
+	print('q_0 = ',initial_state)
+	alphabet = []
+	m = [None]*(1 + max(automaton_transitions))
+
+	for q in automaton_transitions:
+		l = m[q] = [0] * len(alphabet)
+		for s in automaton_transitions[q]:
+			if not s in alphabet:
+				alphabet.append(s)
+				l.append(0)
+			l[alphabet.index(s)] = automaton_transitions[q][s]
+
+	print('S=' + str(alphabet).replace('[','{').replace(']','}'))
+
+	print('M = {')
+	m[0] = [0] * len(alphabet)
+	for l in m:		
+		l.extend([0] * (len(alphabet) - len(l)))
+		print('\t', str(l).replace('[','{').replace(']','}') + ',')
+	print('}')	
+
+	print('q_f = ', final_states)
+
+	return initial_state, m, final_states, alphabet
 
 
 
@@ -501,6 +531,7 @@ print(minimize(0, {
 }, ['IF', 'INT', 'FLOAT']))
 '''
 
+'''
 print(fsm(*rename(*minimize(*dfa(0, {
 	0: {'a': {1, 2}, 'b': {3, 4}}, 
 	1: {'a': {1, 2}, 'b': {3, 4}}, 
@@ -511,10 +542,62 @@ print(fsm(*rename(*minimize(*dfa(0, {
 	6: {'b': 7},
 	7: {'c': 7}
 }, {})))))
+'''
 
 
 
 
+A = (16, {
+	16: {'': {0, 17}}, 
+	
+	0: {'b': 1}, 
+	1: {'': 2}, 
+	2: {'a': 3}, 
+	3: {'': {0, 17}}, 
+	
+	17: {'': 18}, 
+	18: {'b': 19}, 
+	19: {'': 20}, 
+	20: {'a': 21}, 
+	21: {'': 22}, 
+	22: {'': {10, 14}}, 
+
+	14: {'': {8, 15}}, 
+	15: {'': 23}, 
+	8: {'a': 9}, 
+	9: {'': {8, 15}}, 
+
+	10: {'': {4, 11}}, 
+	4: {'a': 5}, 
+	5: {'': {4, 11}}, 
+	11: {'': 12}, 
+	12: {'': {6, 13}}, 
+	13: {'': 23}, 
+	6: {'b': 7}, 
+	7: {'': {6, 13}} 
+}, {23})
+
+B = (10, {
+	10: {'': {0, 11}}, 
+	11: {'': 4}, 
+	0: {'b': 1}, 
+	1: {'': 2}, 
+	2: {'a': 3}, 
+	3: {'': {0, 11}}, 
+	4: {'b': 5}, 
+	5: {'': 12}, 
+	12: {'': {6, 13}}, 
+	13: {'': 14}, 
+	14: {'a': 15}, 
+	15: {'': 16}, 
+	16: {'': {8, 17}}, 
+	6: {'a': 7}, 
+	7: {'': {6, 13}}, 
+	8: {'b': 9}, 
+	9: {'': {8, 17}} 
+}, {17})
+
+print(matrix(*B))
 
 
 			
