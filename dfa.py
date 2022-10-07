@@ -4,9 +4,22 @@
 
 
 
+import sys 
+
+
 e = l = '' # epsilon = lambda = empty string 
 accepted = {set, dict} 
 
+digits = [d for d in range(10)]
+digits_char = [str(d) for d in digits]
+lowercase = [chr(c) for c in range(ord('a'), ord('z') + 1)]
+uppercase = [c.upper() for c in lowercase]
+bothcases = uppercase + lowercase
+bothcases.sort()
+alpha = lambda a,b,chars=bothcases: [c for c in chars if c >= a and c <= b]
+hexadec = digits_char + alpha('a','f', lowercase) + alpha('A', 'F', uppercase)
+newline_char = '\n\r\036\025'
+newline_ascii = {ord(n) for n in newline_char}
 
 def is_final (state, final_states):
 
@@ -419,187 +432,234 @@ def fsm (initial_state, automaton_transitions, final_states = {}):
 		print(f'{q}:{s}>{t}')
 
 			
-def matrix (initial_state, automaton_transitions, final_states, token_priority = []):			
+def matrix (initial_state, automaton_transitions, final_states, token_priority = [], file=sys.stdout):			
 
 	initial_state, automaton_transitions, final_states = rename(*minimize(initial_state, automaton_transitions, final_states, token_priority))
 
-	print('q_0 = ',initial_state)
-	alphabet = []
-	m = [None]*(1 + max(automaton_transitions))
+
+	print('q_0 = ',initial_state,file=file)
+	alphabet = set()
+	for q in automaton_transitions:
+		for s in automaton_transitions[q]:
+			alphabet.add(s)
+
+	alphabet = list(alphabet)			
+	print(alphabet)
+	alphabet.sort()
+	
+	m = [None]*(1 + max(max(automaton_transitions), max(final_states)))
 
 	for q in automaton_transitions:
 		l = m[q] = [0] * len(alphabet)
 		for s in automaton_transitions[q]:
-			if not s in alphabet:
-				alphabet.append(s)
-				l.append(0)
 			l[alphabet.index(s)] = automaton_transitions[q][s]
 
-	print('S=' + str(alphabet).replace('[','{').replace(']','}'))
+	print('S=' + str(alphabet).replace('[','{').replace(']','}'),file=file)
 
-	print('M = {')
+	print(f'M[{len(m)}][{len(alphabet)}] = ','{', file=file)
 	m[0] = [0] * len(alphabet)
+	c = 0
 	for l in m:		
+		if l == None:
+			l = m[0]
 		l.extend([0] * (len(alphabet) - len(l)))
-		print('\t', str(l).replace('[','{').replace(']','}') + ',')
-	print('}')	
+		print('\t', str(l).replace('[','{').replace(']','}') + ',', '\t/*', c, '\t// */ ', file=file)
+		c += 1 
+	print('}', file=file)	
 
-	print('q_f = ', final_states)
+	print('q_f = ', final_states, file=file)
 
 	return initial_state, m, final_states, alphabet
 
+def add_symbol (s,q0,q1,t):
+	if not q0 in t:
+		t[q0] = {}
+
+	if s in t[q0]:	
+		try:
+			hash(t[q0][s])
+			t[q0][s] = {t[q0][s]}
+		except TypeError:	
+			t[q0][s] = set(t[q0][s])
+	else:		
+		t[q0][s] = set()
+	t[q0][s].add(q1)
 
 
-'''
-print(consumes(1,{1:{0:2,1:6},2:{0:7,1:3},3:{0:8,1:4},4:{1:10},6:{0:7,1:7},7:{0:8,1:8},8:{0:10,1:10},10:{}},[0,1,1]))
-print(accepts(0, {0:{'a':1},1:{'a':2},2:{'a':3},3:{'a':4},4:{'a':0}}, 1, 'aaaaaaaaaaa'))
-
-print(consumes(0,{0:{'a':{0,1},'b':0},1:{'b':2},2:{'b':3},3:{}},'ababb'))
 
 
-print(consumes(0, {0: {'a': {1,3}, 'b': {}}, 1: {'a': {}, 'b': {0,2}}, 2: {'a': {1}, 'b': {3}}, 3: {'a': {0,2}, 'b': {}}}, 'abbaa'))
 
 
-print(consumes(0,{0: {'a': {1,3}}, 1: {'a': {2}}, 2: {'a': {1}}, 3: {'a': {4}}, 4: {'a': {5}}, 5: {'a': {3}}}, 'aaaaaa'))
 	
 
-print(consumes(0, {0: {0: {0}, 1: {0,1}}, 1: {0: {2}, 1: {2}}, 2: {0: {3}, 1: {3}}}, [0,0,0,1,0,0,0]))	
-'''
-
-#print(consumes(1, {1: {'': {2}, 'x': {5}}, 2: {'': {3}, 'y': {6}}, 3: {'': 4}, 4: {'': 1}, 5: {'z': {2}, '': {6}}, 6: {'': 7}}, 'xzy'))
-#print(dfa(1, {1: {'': {2}, 'x': {5}}, 2: {'': {3}, 'y': {6}}, 3: {'': 4}, 4: {'': 1}, 5: {'z': {2}, '': {6}}, 6: {'': 7}}, {7}))
-
-#print(minimize(1, {1: {'a': 2, 'b': 4}, 2: {'a': 3}, 3: {'a': 2}, 4: {'a': 5}, 5: {'a': 4}}, {2, 4}))
-
-'''
-print(minimize(1, {
-	1: {'': {2,8}}, 
-	2: {'': {3,4}}, 
-	3: {'1': {5}}, 
-	4: {'0': {6}}, 
-	5: {'': {7}}, 
-	6: {'': {7}}, 
-	7: {'': {2, 8}}, 
-	8: {'.': {9}}, 
-	9: {'': {10, 16}}, 
-	10: {'': {11, 12}}, 
-	11: {'1': {13}}, 
-	12: {'0': {14}}, 
-	13: {'': {15}}, 
-	14: {'': {15}}, 
-	15: {'': {10, 16}} 
-}, {16}))
 
 
-print(minimize(1, {
-	1: {'0': 2, '1': 6}, 
-	2: {'0': 7, '1': 3}, 
-	3: {'0': 1, '1': 3}, 
-	4: {'0': 3, '1': 7}, 
-	5: {'0': 8, '1': 6}, 
-	6: {'0': 3, '1': 7}, 
-	7: {'0': 7, '1': 5}, 
-	8: {'0': 7, '1': 3} 
-}, {3}))
-'''
 
-'''
-print(minimize(0, {
-	0: {'': {1.1, 2.1, 3.1}},
+
+
+
 	
-	1.1: {'i': 1.2},
-	1.2: {'f': 1.3},
-
-	2.1: dict([(str(n), 2.2) for n in range(10)] + [('.', 2.4)]),
-	2.2: dict([(str(n), 2.2) for n in range(10)] + [('.', 2.3)]),
-	2.3: dict([(str(n), 2.3) for n in range(10)]), 
-	2.4: dict([(str(n), 2.5) for n in range(10)]), 
-	2.5: dict([(str(n), 2.5) for n in range(10)]), 
-
-	3.1: dict([(str(n), 3.2) for n in range(10)]), 
-	3.2: dict([(str(n), 3.2) for n in range(10)])  
 
 
 
 
-}, {
-	1.3: 'IF',
-	3.2: 'INT',
-	2.3: 'FLOAT',
-	2.5: 'FLOAT'
 
-}, ['IF', 'INT', 'FLOAT']))
-'''
+def add_token (token_text, token_name, state, automaton_transitions, final_states = None, case_sensitive = False):
 
-'''
-print(fsm(*rename(*minimize(*dfa(0, {
-	0: {'a': {1, 2}, 'b': {3, 4}}, 
-	1: {'a': {1, 2}, 'b': {3, 4}}, 
-	2: {'a': {1, 2, 0}, 'b': {3, 4}, 'c': {0}}, 
-	3: {'a': {1}, 'b': {2}, 'c': {4}}, 
-	4: {'a': {2}, 'b': {3}, 'c': {5}},
-	5: {'a': 6},
-	6: {'b': 7},
-	7: {'c': 7}
-}, {})))))
-'''
+	if final_states == None:
+		final_states = {}
 
+	#next_state = state
 
+	for s in token_text:	
+		
+		n = 0#-len(automaton_transitions)
+		next_state = token_name 
+		while next_state == state or next_state in automaton_transitions:
+			next_state = f'{token_name}{n}'
+			n -= 1
+		#	next_state += 1j	
 
+		for s in ((2*s).title() if (type(s) == str and case_sensitive) else [s]):
+			add_symbol(s,state,next_state,automaton_transitions)						
+		
+		state = next_state	
 
-A = (16, {
-	16: {'': {0, 17}}, 
+	final_states[state]	= token_name
+	return state, automaton_transitions, final_states
+
+def add_transitions (symbols, next_state, state, automaton_transitions):
+
+	for s in symbols:	
+		add_symbol(s, state, next_state, automaton_transitions)
+
 	
-	0: {'b': 1}, 
-	1: {'': 2}, 
-	2: {'a': 3}, 
-	3: {'': {0, 17}}, 
 	
-	17: {'': 18}, 
-	18: {'b': 19}, 
-	19: {'': 20}, 
-	20: {'a': 21}, 
-	21: {'': 22}, 
-	22: {'': {10, 14}}, 
-
-	14: {'': {8, 15}}, 
-	15: {'': 23}, 
-	8: {'a': 9}, 
-	9: {'': {8, 15}}, 
-
-	10: {'': {4, 11}}, 
-	4: {'a': 5}, 
-	5: {'': {4, 11}}, 
-	11: {'': 12}, 
-	12: {'': {6, 13}}, 
-	13: {'': 23}, 
-	6: {'b': 7}, 
-	7: {'': {6, 13}} 
-}, {23})
-
-B = (10, {
-	10: {'': {0, 11}}, 
-	11: {'': 4}, 
-	0: {'b': 1}, 
-	1: {'': 2}, 
-	2: {'a': 3}, 
-	3: {'': {0, 11}}, 
-	4: {'b': 5}, 
-	5: {'': 12}, 
-	12: {'': {6, 13}}, 
-	13: {'': 14}, 
-	14: {'a': 15}, 
-	15: {'': 16}, 
-	16: {'': {8, 17}}, 
-	6: {'a': 7}, 
-	7: {'': {6, 13}}, 
-	8: {'b': 9}, 
-	9: {'': {8, 17}} 
-}, {17})
-
-print(matrix(*B))
 
 
+
+
+
+
+portugol_id = 'ID'	#2
+portugol_int = 'INT'	#3
+portugol_point = '.'	#4
+portugol_float = 'FLOAT'	#5		
+portugol_string = 'STRING'
+portugol_string_final = 'string'
+portugol_contrabarra = '\\'
+portugol_contrabarra_hex = '\\x'
+portugol_contrabarra_hex1 = '\\x0'
+portugol_nova_linha = '\\n'
+
+portugol_inicial = 1
+portugol_finais = {}
+portugol_trans = {portugol_inicial: {'_': portugol_id, '"': portugol_string}, portugol_id: {'_': portugol_id}}
+add_transitions(bothcases, portugol_id, portugol_inicial, portugol_trans) 
+add_transitions(bothcases, portugol_id, portugol_id, portugol_trans)
+add_transitions(digits_char, portugol_id, portugol_id, portugol_trans)
+add_transitions(digits_char, portugol_int, portugol_inicial, portugol_trans)
+add_transitions(digits_char, portugol_int, portugol_int, portugol_trans)
+add_transitions(digits_char, portugol_float, portugol_float, portugol_trans)
+portugol_trans[portugol_int]['.'] = portugol_float
+
+add_transitions([chr(c) for c in range(1,ord(' ')) if not c in newline_ascii] + [chr(c) for c in range(ord(' '), ord('~') + 1) if c != ord('"') and c != ord('\\')] + [chr(c) for c in range(127, 128)], portugol_string, portugol_string, portugol_trans)
+add_transitions('\\', portugol_contrabarra, portugol_string, portugol_trans)
+add_transitions('\\\'"?$%{}0abfnrtvABFNRTV', portugol_string, portugol_contrabarra, portugol_trans)
+#add_transitions('Xx', portugol_contrabarra_hex, portugol_contrabarra, portugol_trans)
+#add_transitions(hexadec, portugol_contrabarra_hex1, portugol_contrabarra_hex, portugol_trans)
+#add_transitions(hexadec, portugol_string, portugol_contrabarra_hex1, portugol_trans)
+add_transitions('"', portugol_string_final, portugol_string, portugol_trans)
+
+add_transitions(newline_char, portugol_nova_linha, portugol_inicial, portugol_trans)
+
+# char '' 
+
+portugol_char = 'char'
+portugol_char1 = 'char1'
+portugol_char2 = 'char2'
+add_transitions("'", portugol_char, portugol_inicial, portugol_trans)
+add_transitions([chr(c) for c in range(1,128) if c != ord("'") and c != ord('\\') and not c in newline_ascii], portugol_char1, portugol_char, portugol_trans)
+add_transitions('\\', portugol_char2, portugol_char, portugol_trans)
+add_transitions('\\\'"?$%{}0abfnrtvABFNRTV', portugol_char1, portugol_char2, portugol_trans)
+add_token("'", 'char', portugol_char1, portugol_trans, portugol_finais)
+
+
+# { comentário de bloco }
+
+portugol_comentario_bloco = 'comentário bloco'
+add_transitions('{', portugol_comentario_bloco, portugol_inicial, portugol_trans)
+#add_transitions([chr(c) for c in range(1, 128) if c != ord('}')], portugol_comentario_bloco, portugol_comentario_bloco, portugol_trans) #erro: adicionar a autorreferência manualmente no estado que referencia o estado final do comentário de bloco
+portugol_comentario_fecha = add_token('}', 'comentário de bloco', portugol_comentario_bloco, portugol_trans, portugol_finais)[0]
+
+
+# // comentário de linha  
+
+portugol_comentario_linha = add_token('//', 'comentário de linha', portugol_inicial, portugol_trans, portugol_finais)[0]
+add_transitions([chr(c) for c in range(1, 128) if not c in newline_ascii], portugol_comentario_linha, portugol_comentario_linha, portugol_trans)
+
+
+
+portugol_tokens = []
+#print(portugol_trans)
+
+for palavra in '''algoritmo vetor enquanto imprima
+inicio matriz faca verdadeiro
+fim tipo para falso
+variaveis funcao de e
+inteiro procedimento ate ou
+real se passo nao
+caractere entao repita div
+logico senao leia'''.strip().split():
+	add_token(palavra, palavra, portugol_inicial, portugol_trans, portugol_finais, True)
+	portugol_tokens.append(palavra)
+
+
+delnome = [(ln.strip().split()[0], ln.strip()[ln.strip().index(' '):].strip()) for ln in '''; ponto e vírgula
+, vírgula
+: dois pontos
+. ponto
+[ abre colchetes
+] fecha colchetes
+( abre parênteses
+) fecha parênteses
+= igual
+<> diferente
+> maior
+>= maior igual
+< menor
+<= menor igual
++ mais
+- menos
+* vezes
+/ divisão
+<- atribuição'''.splitlines()]
+#print(delnome)
+
+for delimitador, nome in delnome:	
+	add_token(delimitador, nome, portugol_inicial, portugol_trans, portugol_finais)
+	portugol_tokens.append(nome)
+
+portugol = portugol_inicial, portugol_trans, portugol_finais, portugol_tokens
+
+
+
+portugol_finais[portugol_id] = 'identificador'
+portugol_finais[portugol_int] = 'numero inteiro'
+portugol_finais[portugol_float] = 'numero real'
+portugol_finais[portugol_string_final] = 'string'
+portugol_finais[portugol_nova_linha] = '\n'
+
+for qf in portugol_finais:
+	if not portugol_finais[qf] in portugol_tokens:
+		portugol_tokens.append(portugol_finais[qf])
+
+
+#print(portugol_trans, portugol_finais)
+
+sys.stdout = open('dfa.log', 'w', encoding='utf-8')
+print(portugol_trans)
+print(matrix(*portugol, file=open('portugol.c','w', encoding='utf8')))
 			
 	
 
